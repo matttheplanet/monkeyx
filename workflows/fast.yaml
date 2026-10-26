@@ -1,0 +1,36 @@
+name: fast
+description: Fast enumeration with subdomain discovery + parallel UDP/web scanning
+steps:
+  - subfinder
+  - dnsx_resolve
+  # Authenticated Shodan: host lookups + credit-bounded org/cert pivots to
+  # surface related/origin infrastructure early. Budget-capped; see monkeyx.config.
+  - name: shodan_enrich
+    args:
+      searches: true
+      search_org: true
+      search_cert: true
+      max_query_credits: 50
+  # Sweep-then-verify: masscan does the fast top-5000 SYN sweep, then nmap runs
+  # its -sV only on the ports masscan found open (ports:open), on live hosts.
+  # The thin nmap pass is what produces service detection + the web URLs that
+  # ax_httpx/ax_gowitness need — masscan alone emits no service info or URLs.
+  - name: ax_masscan
+    args:
+      ports: "top-5000"
+      rate: 10000        # packets/sec PER NODE; aggregate scales with fleet size
+  - name: ax_nmap_tcp
+    args:
+      ports: open        # verify only the swept-open ports, live hosts only
+  - parallel:
+      - name: ax_nmap_udp
+        args:
+          ports: "top-50"
+      - ax_httpx
+      - dns_security
+  # gowitness (headless Chromium, memory-heavy) runs on its own — off the same
+  # fleet node as other scanners to avoid OOM on small (2GB) nodes — and after
+  # ax_httpx so it screenshots the httpx-confirmed live URLs.
+  - ax_gowitness
+  - normalize
+  - jsonl_to_csv

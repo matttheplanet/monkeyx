@@ -1,0 +1,8 @@
+.git
+__pycache__
+*.pyc
+tests/
+docs/
+examples/
+*.md
+.dockerignore

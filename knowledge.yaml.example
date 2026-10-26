@@ -1,0 +1,39 @@
+# Knowledge Base Configuration
+# Copy to ~/.monkeyx/knowledge.yaml and customize
+#
+# Run `monkeyx --sync-knowledge` to clone/update repos and rebuild the index.
+
+settings:
+  max_tokens_per_injection: 4000    # default token budget per AI prompt injection
+  # db_path: ~/.monkeyx/knowledge.db  # override index location
+
+sources:
+  # Local folder (manually maintained, e.g. Obsidian vault)
+  # - name: internal-sops
+  #   type: local
+  #   path: ~/pentest-sops/
+  #   priority: user                  # user > community in retrieval ranking
+  #   file_glob: "**/*.md"
+
+  # Git repo with sparse checkout (only pulls relevant subdirectories)
+  - name: hacktricks
+    type: git
+    url: https://github.com/HackTricks-wiki/hacktricks.git
+    branch: master
+    path: ~/.monkeyx/knowledge/hacktricks
+    priority: community
+    file_glob: "**/*.md"
+    sparse_paths:
+      - network-services-pentesting/
+      - pentesting-web/
+      - linux-hardening/
+      - windows-hardening/
+
+  # Full git repo (no sparse_paths = clone everything)
+  # - name: my-notes
+  #   type: git
+  #   url: https://github.com/youruser/notes.git
+  #   branch: main
+  #   path: ~/.monkeyx/knowledge/my-notes
+  #   priority: user
+  #   file_glob: "**/*.md"

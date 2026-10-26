@@ -1,0 +1,4 @@
+# Standalone MonkeyX report viewer — the ONLY dependencies needed to browse a
+# results zip's scan.db. No scanning engine, axiom, or security tools required.
+fastapi>=0.110
+uvicorn>=0.29

@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "monkeyx"
+version = "1.0.0"
+description = "Distributed external pentest recon-and-scan engine driven across Ax fleets, with a target-discovery ledger, plugin modules/workflows, and AI-assisted analysis"
+authors = ["X-Force Red"]
+license = "Apache-2.0"
+readme = "README.md"
+homepage = "https://github.com/matttheplanet/monkeyx"
+repository = "https://github.com/matttheplanet/monkeyx"
+packages = [{include = "core"}, {include = "modules"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+beautifulsoup4 = "^4.12"
+lxml = "^6.1"
+requests = "^2.32.3"
+colorlog = "^6.9.0"
+PyYAML = "^6.0.2"
+tabulate = "^0.9.0"
+pydantic = "^2.11.2"
+
+[tool.poetry.dev-dependencies]
+pytest = "^9.0"
+pytest-asyncio = "^0.25.3"
+httpx = "^0.28.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -1,0 +1,2 @@
+{"host": "198.18.10.10", "port": 443, "tool": "nuclei", "type": "finding", "severity": "medium", "title": "TLS certificate expired", "template-id": "ssl-issuer", "matched-at": "https://198.18.10.10:443", "detail": "notAfter 2024-01-01, cert expired"}
+{"host": "198.18.10.11", "port": 443, "tool": "nuclei", "type": "finding", "severity": "info", "title": "Admin panel detected", "template-id": "admin-panel", "matched-at": "https://198.18.10.11/admin", "detail": "Login form present (detect template — existence only, not default creds)"}

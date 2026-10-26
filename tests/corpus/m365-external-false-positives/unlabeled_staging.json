@@ -1,0 +1,19 @@
+{
+  "note": "STAGING — not read by the harness. These 6 items from the same run ended 'unclear' (agent hit MAX_ATTEMPTS_PER_FINDING or was scope-blocked from resolving DNS). The CORRECT verdict is a judgment call that is YOURS to make, not the tool's — decide from the evidence, then move each into ground_truth.json 'expected' with a real verdict (confirmed | refuted | unclear). 'unclear' is a legitimate label for genuinely ambiguous cases and is scorable. Do NOT just copy the agent's 'unclear'; that would make scoring circular.",
+  "candidates": [
+    {"host": "198.51.100.226", "port": 443, "claim": "exchange_owa_ecp_enum", "agent_verdict": "unclear",
+     "evidence_summary": "M365 endpoint; curl to /owa/ /ecp/ returned empty; openssl with -servername outlook.com was scope-blocked. Likely refuted (cloud O365, not on-prem OWA/ECP) but not proven.",
+     "suggested_label_hint": "probably refuted"},
+    {"host": "198.51.100.192", "port": 443, "claim": "iis_misconfig", "agent_verdict": "unclear",
+     "evidence_summary": "IIS/ASP.NET responding; /*~1*/.aspx returned an 'Object moved' GenericError redirect (possible IIS tilde/shortname behavior). Genuinely inconclusive — could be a real shortname-enum info leak or benign. Needs a human call."},
+    {"host": "203.0.113.17", "port": 2013, "claim": "unusual_http_service", "agent_verdict": "unclear",
+     "evidence_summary": "nginx returning 404 on /, /admin, /status, /api. No service identified. Likely refuted (nothing exposed) or unclear."},
+    {"host": "198.51.100.24", "port": 80, "claim": "ms_httpapi_services", "agent_verdict": "unclear",
+     "evidence_summary": "Empty responses; nmap http-* scripts inconclusive. M365 edge. Likely refuted or unclear."},
+    {"host": "referral.example.com", "port": null, "claim": "dmarc_missing_spoofing", "agent_verdict": "unclear",
+     "evidence_summary": "dig _dmarc.referral.example.com and _dmarc.example.com were BLOCKED as out-of-scope; DoH fallbacks also blocked. Note: scan.db separately recorded dmarc_missing as a HIGH finding for referral.example.com and emails.example.com (deterministic dns_security), so the CORRECT verdict here is likely 'confirmed' — but ai_validate could not prove it because scope blocked the _dmarc lookup. This is a great case: the deterministic module got it, the agent could not. Consider labeling 'confirmed'.",
+     "suggested_label_hint": "probably confirmed (per dns_security finding)"},
+    {"host": "198.51.100.226", "port": 443, "claim": "exchange_proxyshell", "agent_verdict": "unclear",
+     "evidence_summary": "autodiscover.json probe returned Protocol_MissingProtocol error (M365 cloud behavior); other paths empty. Likely refuted (patched cloud O365) but not proven."}
+  ]
+}

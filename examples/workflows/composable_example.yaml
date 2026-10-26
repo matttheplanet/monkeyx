@@ -1,0 +1,9 @@
+name: web_focused
+description: Example composable workflow — runs fast recon, then web-specific modules
+steps:
+  - workflow: fast
+  - nuclei
+  - gowitness
+  - feroxbuster
+  - ffuf
+  - normalize

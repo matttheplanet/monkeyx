@@ -1,0 +1,78 @@
+name: deep
+description: Maximum external attack-surface coverage — full recon, JS/endpoint discovery, XSS/secret checks, authenticated Shodan pivots, bbot recursive scanning, and AI analysis
+steps:
+  # --- discovery ---------------------------------------------------------
+  - parallel:
+    - ax_subfinder
+    - bbot_passive
+  - ax_puredns_bruteforce
+  - dnsx_resolve
+  # --- port scan + passive code/git enum --------------------------------
+  # shodan_enrich runs IN this group (not before it): it's local + API-bound
+  # (host lookups + credit-bounded org/cert pivots, up to 50 credits) and only
+  # needs dnsx_resolve, so overlapping it with the long TCP scan takes it off
+  # the critical path. Note: pivot IPs it surfaces are logged DERIVED and aren't
+  # authorized to scan (authorization is -t), so running it alongside nmap
+  # (rather than before) doesn't cost scan coverage under the default ip_scope.
+  - parallel:
+    - name: ax_nmap_tcp
+      args:
+        ports: all
+    - bbot_code
+    # Cloud-bucket enum + subdomain-takeover (baddns) — the fast, non-crawl recon
+    # bbot_recon used to bundle; local/no-fleet, domain-driven, kept when the slow
+    # web-heavy crawl was dropped.
+    - bbot_cloud
+    - bbot_takeover
+    - dns_security
+    - name: shodan_enrich
+      args:
+        searches: true
+        search_org: true
+        search_cert: true
+        max_query_credits: 50
+  # --- HTTP confirmation — the gate for all web tooling below ------------
+  - parallel:
+    - ax_httpx
+    - ax_nmap_udp
+  # --- service-specific audits (local, read-only; need open ports) -------
+  - parallel:
+    - ssh_audit_scan
+    - snmp_sweep
+    - smtp_security
+  # --- surface characterisation (needs confirmed live URLs) --------------
+  # Runs AFTER ax_httpx to crawl the httpx-confirmed live URLs + nmap web ports.
+  # Conservative crawl bounds so a wildcard/large scope can't balloon katana to
+  # ~1M URLs (which then explode the ledger/web_dirs/coverage/scan.db). These are
+  # katana's own options: depth 2 (vs its default 3 — depth is the main
+  # combinatorial driver) and a 10m per-target crawl cap (the original runaway had
+  # NO time limit). Small scopes finish well within these; relax or remove for an
+  # exhaustive crawl, and pair with --url-max-per-host to cap retention.
+  # (bbot_recon removed — its `web web-heavy` scan can't finish in its 4h timeout
+  # on real-size scopes and returns nothing; opt-in via `-m bbot_recon`.)
+  - name: ax_katana
+    args:
+      depth: 2
+      crawl_duration: 10m
+  # --- vuln, then visual -------------------------------------------------
+  # gowitness drives headless Chromium (memory-heavy); run it on its own step
+  # rather than alongside nuclei so the two don't co-schedule on the same fleet
+  # node — on small (2GB) nodes nuclei + Chromium together can OOM.
+  - ax_nuclei
+  - ax_gowitness
+  # (ax_linkfinder removed: its JS-endpoint niche is already covered by ax_katana
+  # above, which also feeds the ledger. linkfinder stays available via -m.)
+  # --- targeted web testing (invasive — authorized engagements only) -----
+  - bbot_dast
+  # --- analysis ----------------------------------------------------------
+  # Single normalize pass for the whole run: mints all scan.db findings + links
+  # gowitness screenshots in one shot, feeding jsonl_to_csv/analyze/ai/focus
+  # below. (The earlier mid-run mints were dropped — on large data sets
+  # re-normalizing repeatedly isn't worth the cost; scan.db / the web viewer
+  # just populate once the run finishes.)
+  - normalize
+  - jsonl_to_csv
+  - analyze
+  - ai_analyze
+  - ai_analyze_gowitness
+  - focus

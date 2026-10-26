@@ -1,0 +1,30 @@
+# MonkeyX attack policy — the "bad attacks" denylist (OPTIONAL).
+#
+# Copy to ~/.monkeyx/attack-policy.yaml to extend or relax the built-in denylist
+# that the AI validation agent (ai_validate) is checked against. MonkeyX ships a
+# categorized built-in set (destructive fs, system control, shell spawn, reverse
+# shell, exploit shells, credential spraying, persistence, privilege, secret
+# exfil) — see core/attack_policy.py. This file is only for site-specific tweaks;
+# without it the built-ins apply.
+#
+# Matching is case-insensitive substring, per argv token (a payload can only
+# reach the shell inside a single free-text value, since the agent's binaries are
+# fixed). Keep patterns SPECIFIC so they match a dangerous form, not a tool flag.
+#
+# This is the in-process POLICY layer (what may be attempted). A network-layer
+# containment (egress-firewalled runner) could complement it later but is not
+# implemented today.
+
+# Add site-specific forbidden patterns:
+deny:
+  - pattern: "internal-crown-jewels.corp"   # never touch this host, even in scope
+    reason: "out-of-bounds per engagement RoE"
+    category: "engagement_rule"
+  # - "some-other-forbidden-substring"       # shorthand: string form, category=custom
+
+# Relax a built-in pattern ONLY with explicit authorization for that action
+# (e.g. an authorized red-team op that legitimately needs it). Each entry must
+# match a built-in pattern exactly (see _DEFAULT_DENY in core/attack_policy.py):
+allow:
+  # - "chmod 777"
+  # - "useradd"

@@ -1,0 +1,12 @@
+[
+  {
+    "verdict": "confirmed",
+    "evidence": "openssl s_client showed notAfter in 2024; cert is expired",
+    "finding": {"target": "198.18.10.10:443", "action": "TLS certificate expired"}
+  },
+  {
+    "verdict": "refuted",
+    "evidence": "GET /admin returned 401; login form exists but no default creds worked and no auth bypass; panel merely present behind auth",
+    "finding": {"target": "198.18.10.11:443", "action": "Admin panel default credentials"}
+  }
+]

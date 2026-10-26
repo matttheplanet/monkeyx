@@ -1,0 +1,22 @@
+{
+  "name": "m365-external-false-positives",
+  "description": "Real external-engagement recommendations from ai_analyze against an M365/CDN-heavy attack surface. Every labeled item is a service-misidentification or CDN/edge false-positive that a good validator must REFUTE, not confirm on a weak signal (an nmap services-db port label, a version banner, or a page merely existing). Ground truth was assigned by reading each transcript's raw evidence independently of the agent's own verdict, so scoring is not circular. The 6 inconclusive items from the same run (agent hit max-attempts or was scope-blocked from resolving DNS) are staged in unlabeled_staging.json for operator review before adding — their correct verdict is a genuine judgment call.",
+  "source_run": "synthetic-corpus (scrubbed from a real external engagement)",
+  "authorized_ranges": [],
+  "expected": [
+    {"host": "198.51.100.176", "port": 7443, "claim": "oracle_appserver_https", "verdict": "refuted",
+     "rationale": "TLS cert CN=b.edge.salesforce.com (Salesforce edge); serves a Salesforce SLDS error page. nmap 'oracleas-https' is a port-number guess from its services db, not a real Oracle App Server."},
+    {"host": "198.51.100.188", "port": 7443, "claim": "oracle_appserver_https", "verdict": "refuted",
+     "rationale": "Cert belongs to help.example.net (Example Org); all paths (/, /console, /em) return an identical Salesforce SLDS generic error page. No Oracle App Server present."},
+    {"host": "198.51.100.176", "port": 7443, "claim": "weblogic_deserialization", "verdict": "refuted",
+     "rationale": "Same Salesforce-fronted host; /console/, /wls-wsat/CoordinatorPortType, and the CVE-2020-14882 traversal path all return the same SLDS error page. Not WebLogic."},
+    {"host": "203.0.113.100", "port": 80, "claim": "adfs_info_disclosure", "verdict": "refuted",
+     "rationale": "IP is a Vercara/UltraDNS Client Redirection Service; all requests (incl. /adfs/services/trust/mex) return a generic UltraDNS 404. Real sso.example.com resolves to Akamai (203.0.113.45). The nmap redirect was the DNS redirection service, not ADFS."},
+    {"host": "192.0.2.198", "port": 2087, "claim": "cpanel_whm_exposure", "verdict": "refuted",
+     "rationale": "192.0.2.x is Cloudflare; port 2087 returns a Cloudflare 'Just a moment...' managed-challenge page with cdn-cgi/challenge-platform, not a cPanel/WHM login. Cert is savedsearch-api-stage.example.net via Google Trust Services."},
+    {"host": "203.0.113.9", "port": 443, "claim": "weak_tls_cipher_downgrade", "verdict": "refuted",
+     "rationale": "testssl confirms only TLS1.2/1.3 offered; SSLv2/SSLv3/TLS1.0/1.1 NOT offered, no RC4/DES/NULL/EXPORT, not vulnerable to POODLE/BEAST/CRIME/FREAK/DROWN/SWEET32/Heartbleed. No weak cipher or exploitable downgrade."},
+    {"host": "198.51.100.226", "port": 587, "claim": "exchange_smtp_open_relay_ntlm", "verdict": "refuted",
+     "rationale": "Banner is MW*.outlook.office365.com (M365 cloud, not on-prem Exchange). smtp-ntlm-info returned nothing; AUTH only after STARTTLS (standard O365). No open relay or NTLM disclosure."}
+  ]
+}

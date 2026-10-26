@@ -1,0 +1,3 @@
+{"host": "198.18.10.10", "port": 22, "tool": "nmap", "type": "open_port", "severity": "info", "title": "22/tcp open ssh", "detail": "OpenSSH 8.9"}
+{"host": "198.18.10.10", "port": 443, "tool": "nmap", "type": "open_port", "severity": "info", "title": "443/tcp open https", "detail": "nginx 1.24.0"}
+{"host": "198.18.10.11", "port": 443, "tool": "nmap", "type": "open_port", "severity": "info", "title": "443/tcp open https", "detail": "cloudflare"}

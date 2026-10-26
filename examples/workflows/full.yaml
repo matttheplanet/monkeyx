@@ -1,0 +1,11 @@
+name: full
+description: Complete enumeration including subdomain discovery
+steps:
+  - subfinder
+  - tcp_baseline
+  - tcp_full
+  - nuclei
+  - gowitness
+  - udp_scan
+  - nmap_converter
+  - normalize

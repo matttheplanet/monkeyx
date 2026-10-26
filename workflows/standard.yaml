@@ -1,0 +1,78 @@
+name: standard
+description: Comprehensive testing with vuln scanning, screenshots, and normalized output
+steps:
+  # bbot_passive is a passive discovery source (CT logs, Wayback, passive DNS,
+  # Shodan InternetDB, ipneighbor). It runs alongside subfinder so its
+  # discovered subdomains get bruteforced/resolved and scanned downstream —
+  # not after resolution/scanning, where its findings would arrive too late.
+  - parallel:
+    - subfinder
+    - bbot_passive
+  - ax_puredns_bruteforce
+  - dnsx_resolve
+  # Authenticated Shodan runs IN the nmap group (not before it): it's local +
+  # API-bound and only needs dnsx_resolve, so overlapping it with the long TCP
+  # scan takes it off the critical path. Pivot IPs it surfaces are logged DERIVED
+  # (not authorized to scan; authorization is -t), so alongside-nmap doesn't cost
+  # scan coverage under the default ip_scope.
+  # Sweep-then-verify: masscan does a FAST SYN sweep (per-node rate, fanned
+  # across the fleet via --expand-cidr) to find which ports are actually open,
+  # writing them to the ledger. nmap below then runs its heavy -sV/NSE command
+  # with ports:open — only the swept-open ports, on only the responsive hosts —
+  # instead of grinding all 65k ports on every host (which on an IP scope took
+  # ~25h). Needs raw egress on the fleet, same as nmap -sS.
+  #
+  # Full TCP range (all 65,535): masscan is fast at any port count, so we sweep
+  # everything for maximum coverage. The per-host tarpit cap drops SYN-proxy
+  # hosts so the nmap verify is never poisoned regardless of range. NOTE: on a
+  # tarpit/SYN-proxy-heavy scope the raw greppable masscan.txt can still balloon
+  # to multiple GB on the fleet node (the cap is at ingestion, not write time) —
+  # for a HUGE such scope narrow the sweep by overriding ax_masscan `ports`
+  # (e.g. top-5000) in monkeyx.config, or run the `fast` workflow (top-5000).
+  - name: ax_masscan
+    args:
+      ports: all
+      rate: 10000        # packets/sec PER NODE; aggregate scales with fleet size
+  - parallel:
+    - name: ax_nmap_tcp
+      args:
+        ports: open      # verify only the ports masscan found open, live hosts only
+    - name: shodan_enrich
+      args:
+        searches: true
+        search_org: true
+        search_cert: true
+        max_query_credits: 50
+  - ax_httpx
+  # (bbot_recon removed — on real engagement-size scopes its `web web-heavy`
+  # scan can't finish in its 4h timeout and returns nothing, burning fleet time
+  # for a guaranteed timeout-fail. Still available opt-in via `-m bbot_recon`.)
+  - parallel:
+    - ax_nuclei
+    - ax_nmap_udp
+    - dns_security
+    - smtp_security
+    - ssh_audit_scan
+    # The fast, non-crawl recon that bbot_recon used to bundle — cloud-bucket
+    # enum + subdomain-takeover (baddns). Local/no-fleet, domain-driven, seconds;
+    # kept when bbot_recon's slow web-heavy crawl was dropped.
+    - bbot_cloud
+    - bbot_takeover
+  # snmp_sweep needs UDP/161 from ax_nmap_udp above, so it must run AFTER that
+  # scan — NOT in the same parallel group. Group members snapshot their inputs at
+  # launch, so a same-group snmp_sweep would read the UDP open-ports file before
+  # nmap_udp populated it and silently find nothing. (ssh_audit_scan/smtp_security
+  # stay in the group: they need TCP ports, already scanned by ax_nmap_tcp.)
+  # Local + seconds, so running it here costs negligible wall-clock.
+  - snmp_sweep
+  # gowitness drives headless Chromium (memory-heavy). Run it on its own so it
+  # doesn't co-schedule with nuclei on the same fleet node — on small (2GB)
+  # nodes nuclei + Chromium together can OOM and drop/empty results.
+  - ax_gowitness
+  # Single normalize pass at the end: mints scan.db findings and links gowitness
+  # screenshots + all late data in one shot. (Intermediate normalize passes were
+  # dropped — on large data sets re-normalizing mid-run isn't worth the cost; the
+  # API/web viewer just populates once the run finishes.)
+  - normalize
+  - jsonl_to_csv
+  - analyze

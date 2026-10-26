@@ -1,0 +1,9 @@
+{
+  "name": "cdn-and-origin",
+  "description": "Origin host with an expired cert (confirmable) plus a CDN-fronted login panel that only exists behind auth (should be refuted, not confirmed on the weak 'detect' signal).",
+  "authorized_ranges": ["198.18.10.0/24"],
+  "expected": [
+    {"host": "198.18.10.10", "port": 443, "claim": "expired_tls_cert", "verdict": "confirmed"},
+    {"host": "198.18.10.11", "port": 443, "claim": "admin_panel_default_creds", "verdict": "refuted"}
+  ]
+}

@@ -1,0 +1,6 @@
+name: fast
+description: Quick reconnaissance — baseline TCP, UDP, and nmap conversion
+steps:
+  - tcp_baseline
+  - udp_scan
+  - nmap_converter

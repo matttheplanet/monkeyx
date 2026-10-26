@@ -1,0 +1,29 @@
+# Runtime dependencies for the MonkeyX core engine.
+#
+# Every entry carries BOTH a lower and an upper bound: the lower bound is the
+# minimum version we rely on, the upper bound stops a future MAJOR release from
+# being pulled in and silently breaking a build (a fast-moving SDK like
+# anthropic ships breaking changes inside 0.x, so it is capped below 1.0). All
+# bounds are compatible with the versions currently in use — this constrains
+# future resolution, it does not change what installs today.
+#
+# NOTE: this is a bounded range, not a lockfile. For a byte-reproducible build,
+# generate and commit a lockfile (`poetry lock`, or `pip freeze` after a clean
+# install) in the target environment — bounded ranges alone still let patch/
+# minor versions drift between installs.
+beautifulsoup4>=4.11.2,<5.0
+bs4==0.0.1
+lxml>=6.1.0,<7.0
+soupsieve>=2.4,<3.0
+# fastapi lower bound aligned with monkeyx-private's pyproject (^0.115.12) so
+# installing both projects can't resolve to conflicting FastAPI versions.
+fastapi>=0.115.12,<0.116
+uvicorn==0.34.0
+python-multipart>=0.0.27,<1.0
+bcrypt~=5.0.0
+pyyaml>=6.0,<7.0
+dnspython>=2.4,<3.0
+tldextract>=5.0,<6.0
+requests>=2.28,<3.0
+anthropic[bedrock]>=0.40.0,<1.0
+defusedxml>=0.7.1,<1.0
